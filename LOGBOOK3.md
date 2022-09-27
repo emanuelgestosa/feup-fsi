@@ -21,15 +21,15 @@
 
 ## Exploit
 
-- É possivel a elevação de previlégios para "root" através do comando "sudoedit -s", seguido de um argumento que termina com um unico caracter de backslash.
+- É possivel a elevação de previlégios para "root" através do comando "sudoedit -s", seguido de um argumento que termina com um único caracter de backslash.
 
 - Existe um módulo de metasploit que permite a automação de ataques com esta fraqueza. 
 
 # Ataques
 
-- Existem diversos exploits que foram criados para documentação. Contudo, não encontramos indicios de utilização para ataques.
+- Existem diversos exploits que foram criados para documentação. Contudo, não encontramos indícios de utilização para ataques.
 
-- No entanto, todos os sistemas que utilizem estas versões compremetidas, são vulneraveis a que qualquer utilizador tenha permissões de "root".
+- No entanto, todos os sistemas que utilizem estas versões comprometidas, são vulneráveis a que qualquer utilizador tenha permissões de "root".
 
 - Um utilizador root, pode fazer transmutações ao sistema operativo incluindo mudanças que podem causar danos maliciosos irreversíveis. 
 
