@@ -1,9 +1,9 @@
 
 Breve descrição do grupo
 
-* Turno: [LM]XX
-* Grupo: YY
+* Turno: L03
+* Grupo: 01
 * Alunos:
-    - Aluno1 upZZZZZ 
-    - Aluno2 upZZZZZ
-    - Aluno3 upZZZZZ
+    - Eduardo Correia up201909914 
+    - Emanuel Gestosa up202005485
+    - Diogo Rocha up201606166
