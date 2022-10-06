@@ -78,7 +78,7 @@ third argument of execve()):
 ## Task 4: Environment Variables and system()
 
 As expected, we verify that the new program loaded by the calling process
-keeps all the environment variables:
+seems to keep all the environment variables:
 
 ![systemenv](systemenv.png)
 
