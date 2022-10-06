@@ -77,7 +77,40 @@ third argument of execve()):
 
 ## Task 4: Environment Variables and system()
 
-Has expected, we verify that the new program loaded by the calling process
+As expected, we verify that the new program loaded by the calling process
 keeps all the environment variables:
 
 ![systemenv](systemenv.png)
+
+## Task 5: Environment Variable and Set-UID Programs
+
+As we have already seen in task 2, the parent’s environment variables are
+inherited by the child process, after calling fork(). So since, the shell
+calls fork() to create a child process, and uses the child process to run
+the program, we are expecting that the program will print out all the
+environment variables, including those with the modified values.
+
+![task5](task5.png)
+
+But if we look carefuly, we can't seem to find the LD_LIBRARY_PATH environment
+variable! Wonder why that is the case...
+
+After scavenging through the manual pages, we came to the conclusion that our
+binary is executed in "secure-execution mode". We can see the reason on why
+that is the case in the manual pages for ld.so:
+
+![ldmanual1](ldmanual1.png)
+
+Here we can cleary see that, as a result of executing a set-user-ID program,
+the process's real and effective user IDs differ, causing *AT_SECURE* to have
+a non-zero value, which causes the program to execute in secure-execution mode.
+
+But what does secure-execution mode have to do with LD_LIBRARY_PATH? Well,
+after exploring the same manual page some more, we found the following:
+
+![ldmanual2](ldmanual2.png)
+
+Ah! So, since LD_LIBRARY_PATH is ignored during secure-execution mode, and our
+program is executed in this mode due to making a system call to set-user-ID,
+now it finally becomes clear why we couldn't seem to find the LD_LIBRARY_PATH
+variable in the first screenshot of this section.
