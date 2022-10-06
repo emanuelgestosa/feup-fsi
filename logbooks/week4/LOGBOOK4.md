@@ -114,3 +114,30 @@ Ah! So, since LD_LIBRARY_PATH is ignored during secure-execution mode, and our
 program is executed in this mode due to making a system call to set-user-ID,
 now it finally becomes clear why we couldn't seem to find the LD_LIBRARY_PATH
 variable in the first screenshot of this section.
+
+## Task 6: The PATH Environment Variable and Set-UID Programs
+
+We start by adding /home/seed to the start of our path and by creating in that
+same directory a file named ls what executes the shell command whoami:
+
+![myls1](myls1.png)
+
+Then, after creating, compiling the program under the name "myls", changing
+its owner to root, and making it a Set-UID program, we run it and get the
+following:
+
+![myls2](myls2.png)
+
+Well, we seem to be calling our ls script instead of the real one, but the
+whoami command is returning seed instead of root.
+
+After reading the note, we realize why that is the case, and after
+circunventing this, we finally see that we successfully executed our
+"malicious" script as root:
+
+![myls3](myls3.png)
+
+To make our script more malicious, we could instead spawn a root shell, which
+in turn allows us do anything we please to the system.
+
+![myls4](myls4.png)
