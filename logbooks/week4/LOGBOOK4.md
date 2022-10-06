@@ -74,3 +74,10 @@ By checking the manual pages for execve, we confirm our suspicion ( *envp* is th
 third argument of execve()):
 
 ![myenvmanual](myenvmanual.png)
+
+## Task 4: Environment Variables and system()
+
+Has expected, we verify that the new program loaded by the calling process
+keeps all the environment variables:
+
+![systemenv](systemenv.png)
