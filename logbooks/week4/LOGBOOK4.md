@@ -141,3 +141,83 @@ To make our script more malicious, we could instead spawn a root shell, which
 in turn allows us do anything we please to the system.
 
 ![myls4](myls4.png)
+
+## Task 7: The LD_PRELOAD Environment Variable and Set-UID Programs
+
+Making myprog a regular program and running it as a normal user:
+
+![myprog1](myprog1.png)
+
+Making myprog a SET-UID root program and running it as a normal user (it slept
+for 1 second):
+
+![myprog2](myprog2.png)
+
+Making myprog a Set-UID root program, exporting the LD_PRELOAD environment
+variable again in the root account and running it:
+
+![myprog3](myprog3.png)
+
+Making myprog a Set-UID user1 program exporting the LD_PRELOAD environment
+variable again in a different user’s account and running it (it slept for
+1 second):
+
+![myprog4](myprog4.png)
+
+As we could see, our "malicious" library only was loaded when the effective
+user ID of the process was the same as the real user ID. From our previous
+conclusions of **Task 5**, we were already expecting this behaviour, since
+LD_PRELOAD (just like LD_LIBRARY_PATH and all other LD_* variables), is ignored
+during secure-execution mode, and as we have already seen, this mode is active
+when an user executes a set-uid program of another user.
+
+## Task 8: Invoking External Programs Using system() versus execve()
+
+### Task 8 - Step 1
+
+There is a very obvious flaw in this program: it is appending user controlled
+input to the command that is to be called by system without parsing any special
+characters. This means that we cat just cat a random file, then use the *;*
+special shell operator to let us follow the cat command by any command of our
+liking. And since the program executes as root, this command will have root
+privileges aswell:
+
+![catall1](catall1.png)
+
+As you can see it works as we were expecting, however we need to do the same
+thing we did in **Task 6** to prevent the shell from dropping privileges:
+
+![catall2](catall2.png)
+
+And sure enough, we can execute shell commands as root! As we have previously
+seen we could spawn a root shell and completely take over the system.
+
+### Task 8 - Step 2
+
+However, when we call execve() instead of system(), we not at all expect our
+attack to work, since there is no call to the shell, we can't abuse our little
+*;* trick like before:
+
+![catall3](catall3.png)
+
+And as expected, this didn't work since our argument was just directly passed
+as an argument to /bin/cat, instead of executing 2 commands like before.
+
+## Task 9: Capability Leaking
+
+The mistake that we immediatly spot here was that the file was opened with root
+privileges, but it was never closed. So after the process calls (for some
+reason) /bin/sh we could technically still access the open file as if we were
+root (if though our privilege just dropped).
+To test our theory, we wrote the following C program:
+
+![capleak1](capleak1.png)
+
+It probably doesn't need much explanation, it just prints some text to a given
+file descriptor.
+Now lets test it!
+
+![capleak2](capleak2.png)
+
+As you can see, even though we had no permission to write to this file, we are
+still able to do so thanks to capability leaking.
