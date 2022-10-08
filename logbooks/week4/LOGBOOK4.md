@@ -208,7 +208,7 @@ as an argument to /bin/cat, instead of executing 2 commands like before.
 The mistake that we immediatly spot here was that the file was opened with root
 privileges, but it was never closed. So after the process calls (for some
 reason) /bin/sh we could technically still access the open file as if we were
-root (if though our privilege just dropped).
+root (even though our privilege just dropped).
 To test our theory, we wrote the following C program:
 
 ![capleak1](capleak1.png)
