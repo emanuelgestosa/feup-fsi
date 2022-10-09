@@ -252,7 +252,7 @@ attackers to impersonate users, which is exactly what we are looking for!
 ## Finding an exploit
 
 We found in [exploit-db](https://www.exploit-db.c/exploits/50299om) a python
-script tha tgenerates links that allow us to access the system as any user.
+script that generates links that allow us to access the system as any user.
 
 ## Exploiting the system
 
