@@ -221,3 +221,42 @@ Now lets test it!
 
 As you can see, even though we had no permission to write to this file, we are
 still able to do so thanks to capability leaking.
+
+## CTF
+
+## Recognition
+
+### Plugins and versions
+
+* WordPress version 5.8.1
+* WooCommerce plugin version 5.7.1
+* Booster for WooCommerce plugin version 5.4.3
+
+### Users
+
+* admin (ID 1, found @ [users json](http://ctf-fsi.fe.up.pt:5001/wp-json/wp/v2/users/))
+* Orval Sanford (no more information found)
+
+## Vulnerability search
+
+We found lots of vulnerabilities affecting the versions of WordPress and its
+plugins reported in the previous section.
+
+## Vulnerability chosen
+
+We went with a Vulnerability in the plugin *Booster for WooCommerce*,
+[CVE-2021-34646](https://www.cvedetails.com/cve/CVE-2021-34646/).
+This version of the plugin is vulnerable to authentication bypass, which allows
+attackers to impersonate users, which is exactly what we are looking for!
+
+## Finding an exploit
+
+We found in [exploit-db](https://www.exploit-db.c/exploits/50299om) a python
+script tha tgenerates links that allow us to access the system as any user.
+
+## Exploiting the system
+
+After running the exploit, giving it the target and ID of the user that we want
+to impersonate (we found this ID in the recognition fase), it generates a
+[link](http://ctf-fsi.fe.up.pt:5001/my-account/?wcj_verify_email=eyJpZCI6IjEiLCJjb2RlIjoiMzdlMWU5MTA1ZDA2ZDZkOTUxZTIzNjcwZTNmNjQyMzEifQ),
+and when we open that link, we find ourselves logged in as admin!
