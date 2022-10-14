@@ -66,3 +66,36 @@ Now let's test it!
 ![stackl12](stackl12.png)
 
 Success! We get a root shell.
+
+## Task 4: Launching Attack without Knowing Buffer Size (Level 2)
+
+### Task 4 - Investigation
+
+This time, we are not allowed to determine the buffer size with gdb, so we will
+only gather information about the ebp address:
+
+![stackl21](stackl21.png)
+
+### Task 4 - Attacking
+
+Our shellcode will remain the same, since the binary is still 32-bit.
+Just need to update the return address to be in line with the newly found ebp
+address:
+
+```python
+ret = 0xffffcb18 + 0x100
+```
+
+However, since we only know that our buffer size is between 100 and 200, we
+will just use as the offset all the address between 112 (offset when the buffer
+is 100, as we saw in last task) and 212 (112 + 100):
+
+```python
+L = 4
+for offset in range(112, 212, L):
+    content[offset:offset + L] = (ret).to_bytes(L,byteorder='little')
+```
+
+And once again, we get a root shell:
+
+![stackl22](stackl22.png)
