@@ -1,4 +1,4 @@
-# Trabalho realizado na Semana #4
+# Environment Variable and Set-UID Program Lab
 
 ## Task 1: Manipulating Environment Variables
 
