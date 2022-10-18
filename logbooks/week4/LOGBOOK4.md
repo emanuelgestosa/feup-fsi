@@ -260,3 +260,37 @@ After running the exploit, giving it the target and ID of the user that we want
 to impersonate (we found this ID in the recognition fase), it generates a
 [link](http://ctf-fsi.fe.up.pt:5001/my-account/?wcj_verify_email=eyJpZCI6IjEiLCJjb2RlIjoiMzdlMWU5MTA1ZDA2ZDZkOTUxZTIzNjcwZTNmNjQyMzEifQ),
 and when we open that link, we find ourselves logged in as admin!
+
+## Extra CTF - British Punctuality
+
+After connecting to the server, we found the following suspicious script:
+
+![britishpun1](britishpun1.png)
+
+After analizing it we see, that if the /tmp/env file exists, the scripts cats
+its contents and exports them. Checking if we control this file, we find out it
+does not exist, so we can just create it and use it to export any environment
+variables of our liking.
+
+![britishpun2](britishpun2.png)
+
+Also, we see that the script also executes *printenv* without it's full path,
+so we can use the first export to change the PATH environment variable and then
+create our own printenv script in a directory we control (/tmp). We will use it
+to cat out /flags/flag.txt (we found this file in the main.c file).
+
+![britishpun3](britishpun3.png)
+
+We can see that we are successfully trying to cat out the flag, but we don't
+have enough permissions to do so. Since the script does not have the set-uid
+bit set, and based on the name and description of the CTF, we figured out that
+our best shot to run this script with higher privilege was to check for cron
+scripts running on the server.
+
+![britishpun4](britishpun4.png)
+
+And sure enough, we find a way to elevate our privileges to those of
+flag_reader. We don't even have to do anything else, we just have to check
+/tmp/last_log and the flag should already be there!
+
+![britishpun5](britishpun5.png)
