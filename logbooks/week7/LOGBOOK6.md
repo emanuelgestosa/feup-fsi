@@ -109,29 +109,29 @@ a function since it is in the .text section). Let's see what is does.
 $ objdump -D program
 (...)
 08049236 <old_backdoor>:
-8049236: f3 0f 1e fb           endbr32 
-804923a: 55                    push   %ebp
-804923b: 89 e5                 mov    %esp,%ebp
-804923d: 53                    push   %ebx
-804923e: e8 2d ff ff ff        call   8049170 <__x86.get_pc_thunk.bx>
-8049243: 81 c3 bd 2d 00 00     add    $0x2dbd,%ebx
-8049249: 8d 83 08 e0 ff ff     lea    -0x1ff8(%ebx),%eax
-804924f: 50                    push   %eax
-8049250: e8 8b fe ff ff        call   80490e0 <puts@plt>
-8049255: 83 c4 04              add    $0x4,%esp
-8049258: 8d 83 1b e0 ff ff     lea    -0x1fe5(%ebx),%eax
-804925e: 50                    push   %eax
-804925f: e8 8c fe ff ff        call   80490f0 <system@plt>
-8049264: 83 c4 04              add    $0x4,%esp
-8049267: 90                    nop
-8049268: 8b 5d fc              mov    -0x4(%ebp),%ebx
-804926b: c9                    leave  
-804926c: c3                    ret
+    8049236: f3 0f 1e fb           endbr32 
+    804923a: 55                    push   %ebp
+    804923b: 89 e5                 mov    %esp,%ebp
+    804923d: 53                    push   %ebx
+    804923e: e8 2d ff ff ff        call   8049170 <__x86.get_pc_thunk.bx>
+    8049243: 81 c3 bd 2d 00 00     add    $0x2dbd,%ebx
+    8049249: 8d 83 08 e0 ff ff     lea    -0x1ff8(%ebx),%eax
+    804924f: 50                    push   %eax
+    8049250: e8 8b fe ff ff        call   80490e0 <puts@plt>
+    8049255: 83 c4 04              add    $0x4,%esp
+    8049258: 8d 83 1b e0 ff ff     lea    -0x1fe5(%ebx),%eax
+    804925e: 50                    push   %eax
+    804925f: e8 8c fe ff ff        call   80490f0 <system@plt>
+    8049264: 83 c4 04              add    $0x4,%esp
+    8049267: 90                    nop
+    8049268: 8b 5d fc              mov    -0x4(%ebp),%ebx
+    804926b: c9                    leave  
+    804926c: c3                    ret
 (...)
 ```
 
 This functions makes a call to system(), and judging by its name, we're
-guessing it will probably spawns a shell. There are two steps to exploiting
+guessing it will probably spawn a shell. There are two steps to exploiting
 a program with a format string vulnerability: find what to write and where to
 write it. It's looks like we already found our what, let's note in down.
 
