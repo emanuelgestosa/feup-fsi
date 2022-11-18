@@ -65,3 +65,78 @@ $ curl http://www.seed-server.com/unsafe_home.php?username=admin%27+%23&Password
 
 And we get as a response the HTML code, which contains the table with the
 employee information.
+
+### Task 2.3: Append a new SQL statement
+
+We tried the following payload:
+
+```sql
+admin'; DELETE FROM credential WHERE name="Alice" #
+```
+
+![task2_3](task2_3.png)
+
+But we get the following error message:
+
+![task2_3b](task2_3b.png)
+
+After looking at how MySQL queries work in php, we found that query() "sends a
+unique query (multiple queries are not supported) to the currently active
+database", so that explains why we get an error.
+
+## Task 3: SQL Injection Attack on UPDATE Statement
+
+### Task 3.1: Modify your own salary
+
+To modify the salary, we tried the following payload:
+
+```sql
+Alice', salary=1000 WHERE name='Alice' #
+```
+
+![task3_1a](task3_1a.png)
+
+And after checking out Alice's profile, we see that we successfuly changed her
+salary to 1000.
+
+![task3_1b](task3_1b.png)
+
+### Task 3.2: Modify other people’s salary
+
+To modify other people’s salary, we use a payload similar to the one used in
+the last task, but replace the name with "Boby".
+
+```sql
+Alice', salary=1 WHERE name='Boby' #
+```
+
+![task3_2a](task3_2a.png)
+
+After logging back in the admin's account, we see that salary of Boby is now
+set to 1.
+
+![task3_2b](task3_2b.png)
+
+### Task 3.3: Modify other people’ password
+
+We want to change Boby's password to "password123". To do this, we first need
+to find the SHA1 hash of this string. We will use an online hasher for this.
+
+![task3_3a](task3_3a.png)
+
+Now, just need to replicate the last payload, but instead of changing the
+salary, we must change the password to be equal to
+"cbfdac6008f9cab4083784cbd1874f76618d2a97". Here is our payload:
+
+```sql
+Alice', password="cbfdac6008f9cab4083784cbd1874f76618d2a97" WHERE name='Boby' #
+```
+
+![task3_3b](task3_3b.png)
+
+And sure enough, we are able to login to Boby's account using password123 as
+the password.
+
+![task3_3c](task3_3c.png)
+
+![task3_3d](task3_3d.png)
