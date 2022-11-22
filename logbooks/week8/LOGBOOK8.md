@@ -140,3 +140,46 @@ the password.
 ![task3_3c](task3_3c.png)
 
 ![task3_3d](task3_3d.png)
+
+## CTF 1
+
+When we open the vulnerable webpage, we are greeted by a login form.
+
+![ctf1a](ctf1a.png)
+
+As we have seen in class, a very common vulnerabily in this type of forms, is
+SQL Injection. If the webpage is vulnerable to SQLi, and we manage to exploit
+it, we can completely bypass the login form and login as any user that exists in
+the server database. Looking at the source code of the server, we found the
+following vulnerable lines of code:
+
+```php
+$username = $_POST['username'];
+$password = $_POST['password'];
+
+$query = "SELECT username FROM user WHERE username = '".$username."' AND
+                                            password = '".$password."'";
+```
+
+The query is built using unparsed input from the user. This is a clear
+sign that it is vulnerable to SQLi. Now let's exploit it! Our goal is to login
+as admin, so we will build a payload that sets the username to admin, but
+bypasses the password check. It should look like this:
+
+```sql
+admin' --
+```
+
+This will result in the final query being:
+
+```sql
+SELECT username from user WHERE username = 'admin' -- AND password = ''
+```
+
+As we can see, the resulting query doesn't care what the password is since it
+is commented out. Now let's test our payload:
+
+![ctf1b](ctf1b.png)
+
+And sure enough, we login as admin without knowing the password and get the
+flag!
