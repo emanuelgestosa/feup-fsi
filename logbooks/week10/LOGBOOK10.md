@@ -48,3 +48,44 @@ logs, we see that we received a request that contains the cookies!
 
 Now, everytime an user opens our profile page, we will receive a request
 containing their cookies.
+
+## Task 4: Becoming the Victim’s Friend
+
+Using the HTTP Header Live add-on, we send a friend request to samy and analyze
+the sent request:
+
+![task4a](task4a.png)
+
+We see that it sends a GET request to /action/friends/add, with the parameters
+friend=59 (probably the id corresponding to sammy) and \__elgg_ts and
+\__elg_token, which look like some extra parameters used for security reasons.
+Now, we will log into Samy's account and build and store the payload:
+
+![task4b](task4b.png)
+
+In this JavaScript code, we are building the HTTP GET request we previously
+analyzed, and sending it to the server using AJAX. Now, hopefully, we someone
+visits Samy's profile page, they will add him as a friend.
+
+![task4c](task4c.png)
+
+And sure enough, when we log back in as Alice and visit Samy's profile, we send
+a request to befriend him. And after refreshing the page, we seed that the *Add
+friend* button became *Remove friend*.
+
+![task4d](task4d.png)
+
+### Question 1: Explain the purpose of Lines ➀ and ➁, why are they needed?
+
+This lines are used to get the security tokens needed to send this request.
+
+### Question 2: If the Elgg application only provide the Editor mode for the "About Me" field, i.e., you cannot switch to the Text mode, can you still launch a successful attack?
+
+We don't think it is possible (at least not in modern browsers). We tought
+about putting the payload url inside an img element (since the Editor Mode
+allows us to add images), but we wouldn't have a way to find values for the ts
+and token fields (they seem to change everytime we load the page). We also
+found an interesting [answer](https://security.stackexchange.com/questions/135513/what-could-an-img-src-xss-do#answer-135636)
+talking about a possibility to perform the attack using SVGs, but we decided
+that diving any deeper into this possibility would be a bit out of the scope of
+this lab.
