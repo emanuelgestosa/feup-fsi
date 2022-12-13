@@ -1,6 +1,6 @@
 # Public-Key Infrastructure (PKI) Lab
 
-## Task 1
+## Task 1: Becoming a Certificate Authority (CA)
 
 After copying the openssl config file to our working directory, we uncommented
 the unique_subject line.
@@ -143,4 +143,39 @@ values for these elements in your certificate and key files.
     a1:f7:2b:56:ff:52:29:a6:50:1f:a5:4b:11:a3:2a:
     84:db:46:08:98:95:b2:17:b0:e0:9c:27:5d:81:39:
     a5:19
+```
+
+## Task 2: Generating a Certificate Request for Your Web Server
+
+Generating a CSR for www.gestosa2022.com:
+
+![task2a](task2a.png)
+
+Regenerating the CSR but with the alternative names:
+
+![task2b](task2b.png)
+
+## Task 3: Generating a Certificate for your server
+
+After creating the necessary directories, we ran the command to turning the CSR
+into a X509 certificate:
+
+![task3a](task3a.png)
+
+Uncommenting copy_entensions in the config file:
+
+![task3b](task3b.png)
+
+And signing the the certificate once again:
+
+![task3c](task3c.png)
+
+Finally, we check whether the alternative names are included:
+
+```sh
+$ openssl x509 -in server.crt -text -noout
+(...)
+X509v3 Subject Alternative Name: 
+    DNS:www.gestosa2022.com, DNS:www.gestosa2022A.com, DNS:www.gestosa2022B.com
+(...)
 ```
