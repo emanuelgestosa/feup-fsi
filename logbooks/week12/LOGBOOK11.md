@@ -222,3 +222,69 @@ browser so it can be trusted.
 Finally, we are able to browse the web site using HTTPS!
 
 ![task4j](task4j.png)
+
+## Task 5: Launching a Man-In-The-Middle Attack
+
+For this task, we will try to impersonate a very important website,
+*sigarra.up.pt*. We will reuse everything we created in the previous task, and
+just change the ServerName to be sigarra.up.pt.
+
+![task5a](task5a.png)
+
+Then, we restart the apache server:
+
+![task5b](task5b.png)
+
+After that, we simulate a DNS cache poisoning attack by adding an entry to
+/etc/hosts:
+
+![task5c](task5c.png)
+
+Now, when we try to access sigarra, our browser tries to prevent us from
+accessing the site. This is happening because the website certificate was
+issued for www.gestosa2022.com, but the hostname is sigarra.up.pt. Since this
+don't match, the web browser will not allow us to continue.
+
+![task5d](task5d.png)
+
+To prevent this warning from popping up, we would need to have a certificate
+issued to sigarra.up.pt, which in the real world would implicate that we either
+somehow compromised a trusted CA and issued a certificate; or that we stole the
+private key for the sigarra certificate. Both of this options are very hard to
+pull off in the real world (unless we are part of a certain alphabet agency
+backed up by a powerfull government), and thus the power of PKI.
+
+## Task 6: Launching a Man-In-The-Middle Attack with a Compromised CA
+
+As we mencioned at the end of the previous task, performing a MITM attack would
+be possible if we somehow compromised a trusted CA. We will use the CA created
+in Task 1 (which we already controll and is trusted by the victim's browser) to
+emulate this. Basically we will just repeat the Tasks 2-4, but replacing the
+website name with the target. We will start by creating a CSR:
+
+![task6a](task6a.png)
+
+Then we will use our "compromised" CA to sign the certificate:
+
+![task6b](task6b.png)
+
+After that, we copy the generated certificate and key to the Docker container:
+
+![task6c](task6c.png)
+
+Finally, we make the necessary adjustments to the apache ssl config file from
+the previous task:
+
+![task6d](task6d.png)
+
+After we did all of this, we still couldn't access the site. After some
+debugging we figured out it was because our certificated also needed
+alternative names. So after reduing our previous steps this time with
+sigarra.up.pt as an alternative name, we successfully accessed sigarra, but
+instead of the normal sigarra page, we visited our Hello World page!
+
+![task6f](task6f.png)
+
+If this was a realistic attack, we would take the take to make our page as
+similar as possible to sigarra's, and edit the login form to make it send the
+victim's credentials to our server when he tries to login.
