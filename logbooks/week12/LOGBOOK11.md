@@ -179,3 +179,46 @@ X509v3 Subject Alternative Name:
     DNS:www.gestosa2022.com, DNS:www.gestosa2022A.com, DNS:www.gestosa2022B.com
 (...)
 ```
+
+## Task 4: Deploying Certificate in an Apache-Based HTTPS Website
+
+First, we make a copy of bank32_apache_ssl.conf with the name
+gestosa2022_apache_ssl.conf and make the necessary adjustments.
+
+![task4a](task4a.png)
+
+We also make a copy of the example DocumentRoot directory:
+
+![task4f](task4f.png)
+
+Copying the certificate and key files to the container and changing their
+names:
+
+![task4b](task4b.png)
+
+![task4c](task4c.png)
+
+Enabling apache ssl module and the site:
+
+![taks4d](task4d.png)
+
+Starting the web server:
+
+![task4e](task4e.png)
+
+Hmmm, it looks like our browser is trying to prevent us from accessing the web
+page. After clicking on *Advanced...* we conclude it is because the CA that
+issued the website's certificate is not trusted by the browser.
+
+![task4g](task4g.png)
+
+![task4h](task4h.png)
+
+To fix this, we load our CA certificate that we created in Task 1 into the
+browser so it can be trusted.
+
+![task4i](task4i.png)
+
+Finally, we are able to browse the web site using HTTPS!
+
+![task4j](task4j.png)
