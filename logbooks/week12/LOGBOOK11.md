@@ -288,3 +288,25 @@ instead of the normal sigarra page, we visited our Hello World page!
 If this was a realistic attack, we would take the take to make our page as
 similar as possible to sigarra's, and edit the login form to make it send the
 victim's credentials to our server when he tries to login.
+
+## CTF 1
+
+Since we are told that p is very close to 2^512 and q to 2^513, we will use
+Wolframalpha which lets us get the prime number that comes after a number of
+our liking. We obtain the values:
+
+```text
+p = 13407807929942597099574024998205846127479365820592393377723561443721764030073546976801874298166903427690031858186486050853753882811946569946433649006084171
+q = 26815615859885194199148049996411692254958731641184786755447122887443528060147093953603748596333806855380063716372972101707507765623893139892867298012168351
+```
+
+After that, we use an online RSA calculator that, using the values for p and
+q we just obtained and the value for e that we were given, obtains d:
+
+```text
+d = 32148745104617719611469860837520069095243013547461161624365705436392549353428328854051450263424947795515997965956157657970803482741943111508623685194329747704158900209679524603520884720244523165529357010257764632981617985618265704337977264403534764689557688026111797495540714181081554773530395510587656455823
+```
+
+Finally, we just put this values in the given script, and obtain the flag!
+
+![ctf1](ctf1.png)
