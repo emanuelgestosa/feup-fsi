@@ -149,3 +149,44 @@ the system even more.)
 ![ctf2d](ctf2d.png)
 
 ![ctf2e](ctf2e.png)
+
+## CTF Extra - Apply For Flag II
+
+We start of this challenge by using the page like a normal user would. We
+figured out that this challenge is similar to CTF 1 of this week, with the key
+difference that the page which displays our request is not the same as the one
+that has the button to give the flag (not even on the same port!). This means
+that besides exploiting the XSS vulnerability to "contaminate" the
+justification page, our payload will also have to forge a request to the "give
+flag page", basically performing a CSRF attack on top of it! We develop the
+payload on the assumption that the administrator visits the justification page
+(if he didn't, we wouldn't have a way to trigger the CSRF payload). First let's
+find out what request we want to forge in the first place.
+
+```html
+<form method="POST" action="/request/f77517411bb57746cc2c2d502803f88fe544bb0c/approve" role="form">
+    <div class="submit">
+        
+        <input type="submit" id="giveflag" value="Give the flag" disabled>
+        
+    </div>
+</form>
+```
+
+After our exploration, we found that this form above needs to be submited by
+the administrator. So the plan is to inject this form in the justification
+page, along with some JavaScript to force him to submit it, using the XSS
+vulnerability. Our payload looks like this:
+
+```html
+<form method="POST" action="http://ctf-fsi.fe.up.pt:5005/request/c6c55160d279055bf4bc26bf242e224d6055e399/approve" role="form" id="form"><div class="submit"><input type="submit" id="giveflag" value="Give the flag" ></div></form><script>document.getElementById('form').submit()</script>
+```
+
+We note that we had to change the action atribute to point to port 5005,
+instead of defaulting to the same port (5004). After we submit, we get almost
+instantly redirected to a 403 page, but if we go back and refresh we are able
+to see the flag flashing on the screen for a couple of miliseconds. As a quick
+fix for this, we just disabled JavaScript in the browser settings and went back
+to the page, and were able to easly get the flag.
+
+![ctfextra](ctfextra.png)
