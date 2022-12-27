@@ -341,3 +341,69 @@ print(m.to_bytes(256, "big"))
 And after running it, we obtain the flag:
 
 ![ctf2](ctf2.png)
+
+## CTF Extra - NumberStation3
+
+After analyzing the given script, we saw the following suspicious line of code:
+
+```python
+for i in range(16): rkey[i] = rkey[i] & 1
+```
+
+This means that every byte of the 16 bytes that compose the generated key
+perform a logical and with 1, meaning that every byte can only be either a 1 or
+a 0! So the key, that before this operation had 16 BYTES of entropy (not
+bruteforceable), now only has 16 BITS, so there are only 2^16 possible key
+combinations. This can be bruteforced very quickly.
+
+```python
+# Python Module ciphersuite
+import os
+import sys
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from binascii import hexlify, unhexlify
+
+# Use crypto random generation to get a key with length n
+def gen(): 
+    rkey = bytearray(os.urandom(16))
+    for i in range(16): rkey[i] = rkey[i] & 1
+    return bytes(rkey)
+
+# Reverse operation
+def dec(k, c):
+    assert len(c) % 16 == 0
+    cipher = Cipher(algorithms.AES(k), modes.ECB())
+    decryptor = cipher.decryptor()
+    blocks = len(c)//16
+    msg = b""
+    for i in range(0,(blocks)):
+        msg+=decryptor.update(c[i*16:(i+1)*16])
+        msg=msg[:-15]
+    msg += decryptor.finalize()
+    return msg
+
+ct = "0e91a0c941bd6ca51a97fc63f71d5c6530432ecddd2772fc636744a825083ec312b2b928213f2d720be8023a00a42d32f28690e8f8ff00d63945c46001a937350b44300c3bce83ce07632fbc9312058230c7f703ade3e62878a1e7adfe3cb23acf6c0150503a2e8c3d9c64c4c7135d79d40984131e153d4466fc83fbc584e6ab0e91a0c941bd6ca51a97fc63f71d5c6512b2b928213f2d720be8023a00a42d32d40984131e153d4466fc83fbc584e6ab24db9032e3efe5ad31bf621376c76f45035d7e31bd2971eb2d6d7fd714e2d14a24db9032e3efe5ad31bf621376c76f45a5610e072331a07a850dab788adaa6e075e01194df4df536e08a37da137bb382bd13dab0b880b872673dbb4779c4ee95a6b127fa85768c33a8d79d231e58221ca6b127fa85768c33a8d79d231e58221c452d3e7308e2cde4703ab2137b2db0020700e3e1e77e45c1c8f2417cdd255099452d3e7308e2cde4703ab2137b2db002452d3e7308e2cde4703ab2137b2db00246529806975fd5ab4790b06c93dfcfb4d40984131e153d4466fc83fbc584e6ab46529806975fd5ab4790b06c93dfcfb4d40984131e153d4466fc83fbc584e6ab75e01194df4df536e08a37da137bb3820700e3e1e77e45c1c8f2417cdd25509930c7f703ade3e62878a1e7adfe3cb23aa6b127fa85768c33a8d79d231e58221c0e91a0c941bd6ca51a97fc63f71d5c650700e3e1e77e45c1c8f2417cdd255099035d7e31bd2971eb2d6d7fd714e2d14a4a95ee1c668e6627ee8be609271266f7bdf219a8a8106a28b3362acd0a1a0484035d7e31bd2971eb2d6d7fd714e2d14aeb78237a8a4fec075bafa081b0d5a96d9c7a532ee86e6364ff580867991bd11b"
+
+int_ct = unhexlify(ct)
+while True:
+    k = gen()
+    msg = dec(k, int_ct)
+    if b'flag' in msg:
+        print(msg)
+        break
+
+sys.stdout.flush()
+```
+
+We adapted the script to generate keys and decypher the cyphertext we got from
+the server until the string 'flag' appeared in the decyphered message. We note
+that we could make a faster key generation function, by just going through all
+the keys one by one, but since it runs so fast anyways, we didn't feel the need
+to do this. Results of running the script:
+
+```sh
+$ python3 exploit.py
+b'flag{b41fa1ede753cc8988010159bcf9d26d}\n'
+```
+
+And after 3 seconds of running, we got our flag!
