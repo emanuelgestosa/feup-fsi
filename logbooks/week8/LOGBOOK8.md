@@ -354,7 +354,7 @@ Subtracting them we get the following offset:
 ![ctfe8](ctfe8.png)
 
 This means that to get libc base address, we just use a format string to leak
-this random andress, and after subtracting the offset, we obtain the base! Here
+this random address, and after subtracting the offset, we obtain the base! Here
 is the python code that does this for us:
 
 ```python
