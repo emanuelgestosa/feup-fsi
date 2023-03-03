@@ -1,9 +1,7 @@
+# FSI 2022/23
 
-Breve descrição do grupo
+My seed labs and CTF writeups made for the course of FSI (Computer Security
+Foundations) at FEUP.
 
-* Turno: L03
-* Grupo: 01
-* Alunos:
-    - Eduardo Correia up201909914 
-    - Emanuel Gestosa up202005485
-    - Diogo Rocha up201606166
+Seed labs grade: 20.0/20.0
+CTFs grade:      20.0/20.0
